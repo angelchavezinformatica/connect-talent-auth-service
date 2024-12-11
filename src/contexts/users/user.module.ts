@@ -27,15 +27,14 @@ import { FindUserByEmailUseCase } from './application/find-by-email-use-case';
     },
     CreateUserUseCase,
     FindByIdUserUseCase,
-    FindUserByEmailUseCase
+    FindUserByEmailUseCase,
   ],
   controllers: [UserController],
   exports: [
     IUserRepositoryToken,
-    FindByIdUserUseCase,
     CreateUserUseCase,
-    FindUserByEmailUseCase
-    // FindUserByEmailUseCase,
+    FindByIdUserUseCase,
+    FindUserByEmailUseCase,
   ],
 })
 export class UsersModule {}

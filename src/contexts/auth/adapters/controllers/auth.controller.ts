@@ -7,6 +7,10 @@ import {
   UseGuards,
   Res,
   Req,
+  forwardRef,
+  Inject,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from '../../infrastructure/services/auth.service';
 import { LoginDto } from '../dtos/login.dto';
@@ -17,15 +21,22 @@ import { AuthGuard } from '@nestjs/passport';
 import { GoogleOauthGuard } from '../../infrastructure/guard/google-auth.guard';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { RegisterDto } from '../dtos/register.dto';
+import { FindUserByEmailUseCase } from 'src/contexts/users/application/find-by-email-use-case';
+import { CreateUserUseCase } from 'src/contexts/users/application/create-user.use-case';
+import { ValidRoles } from 'src/contexts/shared/auth/models/valid-roles.enum';
+import { throws } from 'assert';
 
 // import { UserService } from 'src/contexts/users/infrastructure/services/typeorm-user.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
+    @Inject(forwardRef(() => AuthService)) // Asegúrate de usar forwardRef aquí
     private readonly authService: AuthService,
     // private readonly userService: UserService
-    private readonly validateUserCredentialUseCase: ValidateUserCredentialsUseCase
+    private readonly validateUserCredentialUseCase: ValidateUserCredentialsUseCase,
+    private readonly findUserByEmail: FindUserByEmailUseCase,
+    private readonly createUser: CreateUserUseCase
   ) {}
 
   @Post('login')
@@ -55,8 +66,24 @@ export class AuthController {
   }
 
   @Post('register')
-  registerUser(@Body() data: RegisterDto) {
-    return this.authService.registerUser(data);
+  async registerUser(@Body() data: RegisterDto) {
+    try {
+      const existingUser = await this.findUserByEmail.execute(data.email);
+      if (existingUser) {
+        throw new Error('User with this email already exists');
+      }
+      return this.createUser.execute({
+        email: data.email,
+        password: data.password,
+        role: ValidRoles.COLLABORATOR,
+        profile: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+        },
+      });
+    } catch {
+      throw new HttpException('El usuario ya existe', HttpStatus.CONFLICT);
+    }
   }
 
   @Get('google')

@@ -27,8 +27,6 @@ export class UserController {
     private readonly assignSkillUseCase: AssignSkillUserUseCase,
     private readonly priorityScheduler: PriorityScheduler<User>,
     private readonly logger: Logger
-
-
   ) {}
 
   // @Get()
@@ -70,9 +68,7 @@ export class UserController {
 
   @Post('verify')
   // @UseGuards(JwtAuthGuard)
-  async verifyUser(
-    @CurrentUser() user: User
-  ) {
+  async verifyUser(@CurrentUser() user: User) {
     let priority = 1;
     if (user.role === ValidRoles.PROJECT_OWNER) priority = 2;
     else if (user.role === ValidRoles.ADMIN) priority = 3;

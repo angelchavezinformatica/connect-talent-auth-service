@@ -5,7 +5,7 @@ import { User } from '../domain/entities/user.entityy';
 import * as bcrypt from 'bcrypt';
 
 import { ResponseCreateUserDto } from '../adapter/dtos/response-create-user.dto';
-import { BadRequestException, Inject } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { AuthService } from 'src/contexts/auth/infrastructure/services/auth.service';
 import {
   CreateProfileUseCase,
@@ -33,6 +33,7 @@ export class CreateUserUseCase {
     @Inject(IUserRepositoryToken)
     private readonly userRepository: IUserRepository,
 
+    @Inject(forwardRef(() => AuthService)) // Asegúrate de usar forwardRef aquí
     private readonly authService: AuthService,
     private readonly createProfileUseCase: CreateProfileUseCase
   ) {}
@@ -45,7 +46,6 @@ export class CreateUserUseCase {
       const existingUser = await this.userRepository.findOne({
         where: { email: createUserInput.email },
       });
-
       if (existingUser) {
         throw new BadRequestException({
           message: 'El correo electrónico ya está en uso',
@@ -56,26 +56,21 @@ export class CreateUserUseCase {
         this.createProfileUseCase.execute(profileData),
         this.hashPassword(createUserInput.password, this.appConfig.bcryptSalt),
       ]);
-
       const user = new User({
         ...rest,
         profile: profile.id,
         password: hash,
       });
-
       const newUserRepository = await this.userRepository.create(user);
-
       const [accessToken, refreshToken] = await Promise.all([
         this.authService.generateToken(newUserRepository),
         this.authService.generateRefreshToken(newUserRepository),
       ]);
-
       return {
         user: {
           email: newUserRepository.email,
           id: newUserRepository.id,
           profile: profile,
-
           role: newUserRepository.role,
         },
         tokens: {

@@ -16,8 +16,8 @@ export class AuthService implements IAuthService {
     private readonly jwtService: JwtService,
     private readonly finByIdUserRepository: FindByIdUserUseCase,
 
-    private readonly findUserByEmail: FindUserByEmailUseCase,
-    private readonly createUser: CreateUserUseCase
+    private readonly findUserByEmail: FindUserByEmailUseCase
+    // private readonly createUser: CreateUserUseCase
   ) {}
 
   async generateToken(user: User): Promise<string> {
@@ -54,21 +54,19 @@ export class AuthService implements IAuthService {
     return { user: newUser, tokens: tokens } as ResponseLoginAuthDto;
   }
 
-  async registerUser(data: RegisterDto) {
-    const existingUser = await this.findUserByEmail.execute(data.email);
-
-    if (existingUser) {
-      throw new Error('User with this email already exists');
-    }
-
-    return this.createUser.execute({
-      email: data.email,
-      password: data.password,
-      role: ValidRoles.COLLABORATOR,
-      profile: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-      },
-    });
-  }
+  // async registerUser(data: RegisterDto) {
+  //   const existingUser = await this.findUserByEmail.execute(data.email);
+  //   if (existingUser) {
+  //     throw new Error('User with this email already exists');
+  //   }
+  //   return this.createUser.execute({
+  //     email: data.email,
+  //     password: data.password,
+  //     role: ValidRoles.COLLABORATOR,
+  //     profile: {
+  //       firstName: data.firstName,
+  //       lastName: data.lastName,
+  //     },
+  //   });
+  // }
 }
